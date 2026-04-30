@@ -4,8 +4,23 @@
  */
 import { createClient } from "@supabase/supabase-js"
 
-const SUPABASE_URL  = (import.meta.env.VITE_SUPABASE_URL  as string) || "https://placeholder.supabase.co"
-const SUPABASE_ANON = (import.meta.env.VITE_SUPABASE_ANON_KEY as string) || "placeholder-anon-key"
+const FALLBACK_SUPABASE_URL = "https://placeholder.supabase.co"
+const FALLBACK_SUPABASE_ANON = "placeholder-anon-key"
+
+function safeSupabaseUrl(value: unknown): string {
+  const url = String(value ?? "").trim()
+  try {
+    const parsed = new URL(url)
+    if (parsed.protocol === "http:" || parsed.protocol === "https:") return url
+  } catch {
+    // Keep the public app renderable even when deployment env vars are missing.
+  }
+  return FALLBACK_SUPABASE_URL
+}
+
+const SUPABASE_URL = safeSupabaseUrl(import.meta.env.VITE_SUPABASE_URL)
+const SUPABASE_ANON =
+  String(import.meta.env.VITE_SUPABASE_ANON_KEY ?? "").trim() || FALLBACK_SUPABASE_ANON
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON)
 
